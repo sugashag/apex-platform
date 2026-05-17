@@ -4,17 +4,18 @@ import enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+from app.models.enum_helpers import pg_enum
 
 if TYPE_CHECKING:
     from app.models.workspace import Workspace
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     """Role within a workspace."""
 
     ADMIN = "admin"
@@ -39,7 +40,7 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     role: Mapped[UserRole] = mapped_column(
-        SAEnum(UserRole, name="user_role"),
+        pg_enum(UserRole, name="user_role"),
         nullable=False,
         default=UserRole.REP,
     )

@@ -8,7 +8,19 @@ from fastapi import FastAPI
 from app.config import settings
 from app.database import engine
 from app.middleware import WorkspaceContextMiddleware
-from app.routers import auth, health, workspaces
+from app.routers import (
+    activities,
+    auth,
+    companies,
+    contacts,
+    deals,
+    health,
+    leads,
+    pipeline_stages,
+    workspaces,
+)
+
+API_V1_PREFIX = "/api/v1"
 
 
 @asynccontextmanager
@@ -27,9 +39,18 @@ app = FastAPI(
 
 app.add_middleware(WorkspaceContextMiddleware)
 
+# Platform routes — kept unversioned for now.
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(workspaces.router)
+
+# CRM routes — versioned under /api/v1.
+app.include_router(companies.router, prefix=API_V1_PREFIX)
+app.include_router(contacts.router, prefix=API_V1_PREFIX)
+app.include_router(pipeline_stages.router, prefix=API_V1_PREFIX)
+app.include_router(deals.router, prefix=API_V1_PREFIX)
+app.include_router(leads.router, prefix=API_V1_PREFIX)
+app.include_router(activities.router, prefix=API_V1_PREFIX)
 
 
 @app.get("/", include_in_schema=False)

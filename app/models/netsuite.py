@@ -4,20 +4,21 @@ import enum
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
+from app.models.enum_helpers import pg_enum
 
 
-class SyncDirection(str, enum.Enum):
+class SyncDirection(enum.StrEnum):
     APEX_TO_NETSUITE = "apex_to_netsuite"
     NETSUITE_TO_APEX = "netsuite_to_apex"
     BIDIRECTIONAL = "bidirectional"
 
 
-class SyncStatus(str, enum.Enum):
+class SyncStatus(enum.StrEnum):
     PENDING = "pending"
     SYNCED = "synced"
     FAILED = "failed"
@@ -40,11 +41,11 @@ class NetSuiteSyncLog(Base):
     netsuite_internal_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     netsuite_external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     sync_direction: Mapped[SyncDirection] = mapped_column(
-        SAEnum(SyncDirection, name="sync_direction"),
+        pg_enum(SyncDirection, name="sync_direction"),
         nullable=False,
     )
     status: Mapped[SyncStatus] = mapped_column(
-        SAEnum(SyncStatus, name="sync_status"),
+        pg_enum(SyncStatus, name="sync_status"),
         nullable=False,
         default=SyncStatus.PENDING,
     )
