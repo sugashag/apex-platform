@@ -40,5 +40,5 @@ class UserRead(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105 — OAuth2 token type, not a credential
     expires_in: int

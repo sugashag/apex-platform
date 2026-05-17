@@ -1,6 +1,6 @@
 """Password hashing and JWT helpers."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -14,12 +14,14 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(plaintext: str) -> str:
     """Hash a plaintext password using bcrypt."""
-    return _pwd_context.hash(plaintext)
+    hashed: str = _pwd_context.hash(plaintext)
+    return hashed
 
 
 def verify_password(plaintext: str, hashed: str) -> bool:
     """Verify a plaintext password against a bcrypt hash."""
-    return _pwd_context.verify(plaintext, hashed)
+    ok: bool = _pwd_context.verify(plaintext, hashed)
+    return ok
 
 
 def create_access_token(
@@ -33,12 +35,12 @@ def create_access_token(
     Returns (token, lifetime_seconds).
     """
     lifetime = expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    expire = datetime.now(tz=timezone.utc) + timedelta(minutes=lifetime)
+    expire = datetime.now(tz=UTC) + timedelta(minutes=lifetime)
     payload: dict[str, Any] = {
         "sub": str(user_id),
         "workspace_id": str(workspace_id),
         "exp": expire,
-        "iat": datetime.now(tz=timezone.utc),
+        "iat": datetime.now(tz=UTC),
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token, lifetime * 60
@@ -46,7 +48,10 @@ def create_access_token(
 
 def decode_access_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT. Raises `JWTError` if invalid or expired."""
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    payload: dict[str, Any] = jwt.decode(
+        token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM],
+    )
+    return payload
 
 
 __all__ = [

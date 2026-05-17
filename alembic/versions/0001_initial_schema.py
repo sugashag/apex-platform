@@ -5,27 +5,33 @@ Revises:
 Create Date: 2026-05-16
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "0001"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
-user_role_enum = sa.Enum(
-    "admin", "manager", "rep", "readonly",
-    name="user_role",
-)
-sync_direction_enum = sa.Enum(
+def _enum(*values: str, name: str) -> postgresql.ENUM:
+    """ENUM declared with `create_type=False` so the type is only created via
+    the explicit `.create(bind, checkfirst=True)` call below — preventing
+    SQLAlchemy from emitting a second CREATE TYPE during CREATE TABLE.
+    """
+    return postgresql.ENUM(*values, name=name, create_type=False)
+
+
+user_role_enum = _enum("admin", "manager", "rep", "readonly", name="user_role")
+sync_direction_enum = _enum(
     "apex_to_netsuite", "netsuite_to_apex", "bidirectional",
     name="sync_direction",
 )
-sync_status_enum = sa.Enum(
+sync_status_enum = _enum(
     "pending", "synced", "failed", "conflict",
     name="sync_status",
 )
@@ -56,8 +62,11 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint("slug", name="uq_workspaces_slug"),
     )
+    # Unique-index on slug doubles as the uniqueness constraint to match
+    # `slug: Mapped[str] = mapped_column(..., unique=True, index=True)` in the
+    # Workspace model — keeping a separate UniqueConstraint here would cause
+    # `alembic check` to report a phantom drift.
     op.create_index("ix_workspaces_slug", "workspaces", ["slug"], unique=True)
 
     # --- users ----------------------------------------------------------------

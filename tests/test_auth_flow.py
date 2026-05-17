@@ -16,7 +16,7 @@ def fresh_slug() -> str:
 
 
 async def test_register_login_me(client: AsyncClient, fresh_slug: str) -> None:
-    email = f"{uuid.uuid4().hex[:8]}@apex.test"
+    email = f"{uuid.uuid4().hex[:8]}@example.com"
     password = "correct-horse-battery-staple"
 
     # Register
@@ -58,7 +58,7 @@ async def test_login_with_wrong_password_fails(
     client: AsyncClient,
     fresh_slug: str,
 ) -> None:
-    email = f"{uuid.uuid4().hex[:8]}@apex.test"
+    email = f"{uuid.uuid4().hex[:8]}@example.com"
     await client.post(
         "/auth/register",
         json={

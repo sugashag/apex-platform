@@ -9,6 +9,7 @@ from app.models.user import User, UserRole
 from app.models.workspace import Workspace
 from app.schemas.user import TokenResponse, UserLogin, UserRead, UserRegister
 from app.services.auth import create_access_token, hash_password, verify_password
+from app.services.pipeline_stages import seed_default_pipeline_stages
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,6 +30,8 @@ async def register(payload: UserRegister, db: DbSession) -> TokenResponse:
     )
     db.add(workspace)
     await db.flush()
+
+    await seed_default_pipeline_stages(db, workspace.id)
 
     user = User(
         workspace_id=workspace.id,
