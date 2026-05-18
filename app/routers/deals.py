@@ -8,11 +8,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.rbac import require_manager_or_above
 from app.models.activity import Activity, ActivityType, ActorType
 from app.models.company import Company
 from app.models.contact import Contact
 from app.models.deal import CloseReason, Deal
 from app.models.pipeline_stage import PipelineStage
+from app.models.user import User
 from app.schemas.activity import ActivityResponse
 from app.schemas.company import CompanyResponse
 from app.schemas.contact import ContactResponse
@@ -265,7 +267,7 @@ async def update_deal(
 async def delete_deal(
     deal_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: User = Depends(require_manager_or_above()),
 ) -> None:
     deal = await _load_deal(db, deal_id, current_user.workspace_id)
     deal.is_active = False

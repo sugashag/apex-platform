@@ -11,14 +11,17 @@ from app.middleware import WorkspaceContextMiddleware
 from app.routers import (
     activities,
     agents,
+    api_keys,
     assignment_rules,
     attribution,
     auth,
+    billing,
     calls,
     companies,
     contacts,
     deals,
     drafts,
+    export,
     forecasts,
     health,
     inbox,
@@ -26,12 +29,15 @@ from app.routers import (
     messages,
     msa,
     netsuite,
+    onboarding,
+    partners,
     payments,
     pipeline_stages,
     reports,
     sequences,
     sms,
     tracking,
+    users,
     webhooks_posthog,
     webhooks_resend,
     webhooks_stripe,
@@ -102,6 +108,14 @@ app.include_router(payments.deals_router, prefix=API_V1_PREFIX)
 app.include_router(msa.router, prefix=API_V1_PREFIX)
 app.include_router(msa.deals_router, prefix=API_V1_PREFIX)
 app.include_router(netsuite.router, prefix=API_V1_PREFIX)
+
+# Productization + GTM (Phase 8) — versioned under /api/v1.
+app.include_router(billing.router, prefix=API_V1_PREFIX)
+app.include_router(api_keys.router, prefix=API_V1_PREFIX)
+app.include_router(onboarding.router, prefix=API_V1_PREFIX)
+app.include_router(users.router, prefix=API_V1_PREFIX)
+app.include_router(export.router, prefix=API_V1_PREFIX)
+app.include_router(partners.router, prefix=API_V1_PREFIX)
 
 # Public marketing-site tracking endpoints — UNVERSIONED so the JS snippet
 # embedded on customers' marketing sites never needs to change when we ship

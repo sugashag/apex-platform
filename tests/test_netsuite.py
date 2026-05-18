@@ -17,7 +17,24 @@ from tests.helpers import register_workspace
 API = "/api/v1"
 
 
+async def _upgrade_to_growth(client: AsyncClient, headers: dict[str, str]) -> None:
+    """Workspace registration ships with Starter (no NetSuite). Move to Growth."""
+    plans = (await client.get(f"{API}/billing/plans")).json()
+    growth = next(p for p in plans if p["slug"] == "growth")
+    resp = await client.post(
+        f"{API}/billing/subscribe",
+        headers=headers,
+        json={
+            "plan_id": growth["id"],
+            "billing_email": "billing@example.com",
+            "billing_name": "Test",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+
+
 async def _save_config(client: AsyncClient, headers: dict[str, str]) -> None:
+    await _upgrade_to_growth(client, headers)
     resp = await client.post(
         f"{API}/netsuite/config",
         headers=headers,

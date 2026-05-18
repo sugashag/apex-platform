@@ -12,6 +12,7 @@ from app.agents.lead_scorer import LeadScorerAgent
 from app.agents.outbound_drafter import OutboundDrafterAgent
 from app.agents.reply_drafter import ReplyDrafterAgent
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.plan_enforcement import check_ai_agents_allowed
 from app.models.agent_run import AgentRun, AgentRunStatus, AgentType
 from app.models.call import Call
 from app.models.contact import Contact
@@ -37,6 +38,7 @@ async def trigger_lead_scorer(
     db: DbSession,
     current_user: CurrentUser,
 ) -> AgentRunResponse:
+    await check_ai_agents_allowed(db, current_user.workspace_id)
     lead = (
         await db.execute(
             select(Lead).where(
@@ -71,6 +73,7 @@ async def trigger_call_summarizer(
     db: DbSession,
     current_user: CurrentUser,
 ) -> AgentRunResponse:
+    await check_ai_agents_allowed(db, current_user.workspace_id)
     call = (
         await db.execute(
             select(Call).where(
@@ -111,6 +114,7 @@ async def trigger_outbound_drafter(
     current_user: CurrentUser,
     payload: Annotated[DraftOutreachRequest, Body()] = DraftOutreachRequest(),
 ) -> AgentRunResponse:
+    await check_ai_agents_allowed(db, current_user.workspace_id)
     contact = (
         await db.execute(
             select(Contact).where(
@@ -148,6 +152,7 @@ async def trigger_reply_drafter(
     db: DbSession,
     current_user: CurrentUser,
 ) -> AgentRunResponse:
+    await check_ai_agents_allowed(db, current_user.workspace_id)
     thread = (
         await db.execute(
             select(Thread).where(

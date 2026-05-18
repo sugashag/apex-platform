@@ -25,7 +25,7 @@ from app.dependencies import DbSession
 from app.models.activity import Activity, ActivityType, ActorType
 from app.models.deal import Deal
 from app.models.payment import Payment, PaymentStatus
-from app.services import workflow_engine
+from app.services import billing_service, workflow_engine
 from app.services.agent_queue import enqueue
 from app.services.stripe_service import stripe_service
 
@@ -283,8 +283,27 @@ async def stripe_event(
         ) from exc
 
     event_type = event.get("type") or ""
+    obj = (event.get("data") or {}).get("object") or {}
+
     try:
-        if event_type == "payment_intent.succeeded":
+        # APEX-platform billing events (workspace subscriptions) — handled first
+        # so an ``invoice.paid`` flagged with ``apex_billing=true`` metadata
+        # never falls through to the deal-payment path.
+        if event_type in {
+            "customer.subscription.updated",
+            "customer.subscription.deleted",
+            "invoice.payment_failed",
+        } or (
+            event_type == "invoice.paid"
+            and billing_service.is_billing_subscription_event(event_type, obj)
+        ):
+            updated = await billing_service.handle_subscription_event(
+                db, event_type, obj
+            )
+            if updated is None and event_type == "invoice.paid":
+                # Not a billing invoice — fall through to deal payment handler.
+                await _handle_invoice_paid(db, event)
+        elif event_type == "payment_intent.succeeded":
             await _handle_payment_succeeded(db, event)
         elif event_type == "payment_intent.payment_failed":
             await _handle_payment_failed(db, event)

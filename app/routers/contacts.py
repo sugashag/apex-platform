@@ -8,8 +8,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.plan_enforcement import check_contact_limit
+from app.middleware.rbac import require_manager_or_above
 from app.models.activity import Activity, ActivityType, ActorType
 from app.models.contact import Contact, EmailStatus
+from app.models.user import User
 from app.schemas.activity import ActivityListResponse, ActivityResponse
 from app.schemas.contact import (
     ContactCreate,
@@ -30,6 +33,7 @@ async def create_contact(
     db: DbSession,
     current_user: CurrentUser,
 ) -> ContactResponse:
+    await check_contact_limit(db, current_user.workspace_id)
     contact = Contact(
         workspace_id=current_user.workspace_id,
         **payload.model_dump(),
@@ -196,7 +200,7 @@ async def update_contact(
 async def delete_contact(
     contact_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: User = Depends(require_manager_or_above()),
 ) -> None:
     contact = await _load_contact(db, contact_id, current_user.workspace_id)
     contact.is_active = False

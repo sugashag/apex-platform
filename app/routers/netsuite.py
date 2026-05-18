@@ -8,8 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.plan_enforcement import check_netsuite_allowed
+from app.middleware.rbac import require_admin
 from app.models.netsuite import NetSuiteSyncLog, SyncStatus
 from app.models.netsuite_config import NetSuiteConfig
+from app.models.user import User
 from app.schemas.netsuite import (
     NetSuiteConfigCreate,
     NetSuiteConfigResponse,
@@ -72,8 +75,9 @@ async def _load_config_for_workspace(
 async def save_config(
     payload: NetSuiteConfigCreate,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: User = Depends(require_admin()),
 ) -> NetSuiteConfigResponse:
+    await check_netsuite_allowed(db, current_user.workspace_id)
     existing = await _load_config_for_workspace(db, current_user.workspace_id)
     if existing is None:
         config = NetSuiteConfig(
