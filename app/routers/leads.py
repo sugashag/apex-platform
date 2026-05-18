@@ -19,7 +19,7 @@ from app.schemas.lead import (
     LeadResponse,
     LeadUpdate,
 )
-from app.services.leads import convert_to_deal
+from app.services.leads import after_lead_created, convert_to_deal
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -50,6 +50,7 @@ async def create_lead(
     db.add(lead)
     await db.commit()
     await db.refresh(lead)
+    await after_lead_created(lead)
     return LeadResponse.model_validate(lead)
 
 
