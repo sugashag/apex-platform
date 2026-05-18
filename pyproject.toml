@@ -28,6 +28,9 @@ twilio = ">=9.3"
 resend = ">=2.4"
 anthropic = ">=0.40"
 arq = ">=0.26"
+stripe = ">=11.0"
+fpdf2 = ">=2.8"
+requests-oauthlib = ">=2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.3"
@@ -60,7 +63,7 @@ plugins = ["pydantic.mypy"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["passlib.*", "jose.*", "twilio.*", "resend.*", "anthropic.*", "arq.*"]
+module = ["passlib.*", "jose.*", "twilio.*", "resend.*", "anthropic.*", "arq.*", "stripe.*", "fpdf.*", "requests_oauthlib.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -22,8 +22,11 @@ from app.models.form_submission import FormSubmission
 from app.models.lead import Lead, LeadStatus
 from app.models.lead_score_history import LeadScoreHistory
 from app.models.message import Message, MessageDirection
+from app.models.msa_document import MsaDocument, MsaStatus
 from app.models.netsuite import NetSuiteSyncLog, SyncDirection, SyncStatus
+from app.models.netsuite_config import NetSuiteConfig, NetSuiteTestStatus
 from app.models.page_view import PageView
+from app.models.payment import Payment, PaymentStatus
 from app.models.pipeline_forecast import ForecastPeriod, PipelineForecast
 from app.models.pipeline_stage import PipelineStage
 from app.models.sequence import Sequence
@@ -83,8 +86,14 @@ __all__ = [
     "LeadStatus",
     "Message",
     "MessageDirection",
+    "MsaDocument",
+    "MsaStatus",
+    "NetSuiteConfig",
     "NetSuiteSyncLog",
+    "NetSuiteTestStatus",
     "PageView",
+    "Payment",
+    "PaymentStatus",
     "PipelineForecast",
     "PipelineStage",
     "Sequence",

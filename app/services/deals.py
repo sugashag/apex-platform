@@ -10,6 +10,7 @@ from app.models.activity import Activity, ActivityType, ActorType
 from app.models.deal import CloseReason, Deal
 from app.models.pipeline_stage import PipelineStage
 from app.services import workflow_engine
+from app.services.agent_queue import enqueue
 from app.services.attribution_service import link_deal_to_attributions
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,20 @@ async def change_stage(
                 logger.exception(
                     "attribution backfill failed for deal %s", deal.id
                 )
+        # Phase 7: fan out to NetSuite. Both calls are best-effort —
+        # `enqueue` swallows Redis failures so the won transition keeps
+        # going even when the worker stack is unavailable.
+        if deal.company_id is not None:
+            await enqueue(
+                "sync_company_to_netsuite",
+                deal.workspace_id,
+                deal.company_id,
+            )
+        await enqueue(
+            "sync_deal_to_netsuite",
+            deal.workspace_id,
+            deal.id,
+        )
     elif new_stage.is_lost:
         deal.closed_at = datetime.now(tz=UTC)
         deal.close_reason = CloseReason.LOST

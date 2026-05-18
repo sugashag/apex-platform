@@ -73,6 +73,19 @@ class Settings(BaseSettings):
     API_BASE_URL: str = "http://localhost:8000"
     TRACKING_RATE_LIMIT_PER_MINUTE: int = 100
 
+    # Stripe — optional; payment services degrade to mocks when unset.
+    STRIPE_SECRET_KEY: str | None = None
+    STRIPE_WEBHOOK_SECRET: str | None = None
+    STRIPE_PUBLISHABLE_KEY: str | None = None
+
+    # MSA — template + local storage for generated PDFs.
+    MSA_TEMPLATE_PATH: str = "app/templates/msa_template.txt"
+    MSA_STORAGE_PATH: str = "/tmp/msa_documents/"  # noqa: S108 — dev default, prod uses object storage
+
+    # NetSuite — platform-level fallback. Live credentials live per-workspace
+    # in `netsuite_configs`. This is purely a dev convenience.
+    NETSUITE_DEFAULT_ACCOUNT_ID: str | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:

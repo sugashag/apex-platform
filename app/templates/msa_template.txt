@@ -1,0 +1,53 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into on {{date}}
+between {{workspace.name}} ("Provider") and {{company.name}} ("Client").
+
+1. ENGAGEMENT
+
+Provider agrees to deliver the engagement described as "{{deal.name}}" to
+Client under the terms set out in this Agreement.
+
+2. FEES AND PAYMENT
+
+Client agrees to pay Provider a total of ${{deal.value}} for the services
+contemplated by this Agreement. Invoices are due net 30 days from receipt
+unless otherwise specified in a separate Statement of Work.
+
+3. TERM
+
+This Agreement is effective from the signature date and continues until
+all obligations are performed or it is terminated under Section 6.
+
+4. CONFIDENTIALITY
+
+Each party will treat as confidential any non-public information disclosed
+to it by the other party and will use such information only to perform
+this Agreement.
+
+5. INTELLECTUAL PROPERTY
+
+All deliverables produced under this Agreement become the property of
+Client upon payment in full of the applicable fees.
+
+6. TERMINATION
+
+Either party may terminate this Agreement on thirty (30) days written
+notice. Fees earned through the effective termination date remain payable.
+
+7. ENTIRE AGREEMENT
+
+This Agreement, together with any Statements of Work executed under it,
+constitutes the entire agreement between the parties and supersedes all
+prior negotiations or understandings.
+
+SIGNATURES
+
+Client:
+    Name:  {{contact.first_name}} {{contact.last_name}}
+    Email: {{contact.email}}
+    Date:  {{date}}
+
+Provider:
+    {{workspace.name}}
+    Date:  {{date}}

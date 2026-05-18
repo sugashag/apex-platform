@@ -24,6 +24,9 @@ from app.routers import (
     inbox,
     leads,
     messages,
+    msa,
+    netsuite,
+    payments,
     pipeline_stages,
     reports,
     sequences,
@@ -31,6 +34,7 @@ from app.routers import (
     tracking,
     webhooks_posthog,
     webhooks_resend,
+    webhooks_stripe,
     webhooks_twilio,
     workflows,
     workspaces,
@@ -92,6 +96,13 @@ app.include_router(sequences.enrollments_router, prefix=API_V1_PREFIX)
 app.include_router(reports.router, prefix=API_V1_PREFIX)
 app.include_router(forecasts.router, prefix=API_V1_PREFIX)
 
+# Payments + MSA + NetSuite bridge (Phase 7) — versioned under /api/v1.
+app.include_router(payments.router, prefix=API_V1_PREFIX)
+app.include_router(payments.deals_router, prefix=API_V1_PREFIX)
+app.include_router(msa.router, prefix=API_V1_PREFIX)
+app.include_router(msa.deals_router, prefix=API_V1_PREFIX)
+app.include_router(netsuite.router, prefix=API_V1_PREFIX)
+
 # Public marketing-site tracking endpoints — UNVERSIONED so the JS snippet
 # embedded on customers' marketing sites never needs to change when we ship
 # a new API version. Auth is via the public tracking_token, not JWT.
@@ -101,6 +112,7 @@ app.include_router(tracking.router)
 app.include_router(webhooks_twilio.router)
 app.include_router(webhooks_resend.router)
 app.include_router(webhooks_posthog.router)
+app.include_router(webhooks_stripe.router)
 
 
 @app.get("/", include_in_schema=False)
