@@ -36,7 +36,7 @@ from app.services.twilio_service import twilio_service
 
 logger = logging.getLogger(__name__)
 
-ActionHandler = Any  # type: callable returning awaitable dict[str, Any]
+ActionHandler = Any  # callable returning awaitable dict[str, Any]
 
 
 # --- helpers ----------------------------------------------------------------

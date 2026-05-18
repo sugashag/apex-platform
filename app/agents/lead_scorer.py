@@ -15,6 +15,7 @@ from app.models.agent_run import AgentType
 from app.models.company import Company
 from app.models.contact import Contact
 from app.models.lead import Lead
+from app.models.lead_score_history import LeadScoreHistory
 
 SYSTEM_PROMPT = (
     "You are a B2B lead scoring expert. Score this lead 0-100 based on:\n"
@@ -150,6 +151,17 @@ class LeadScorerAgent(BaseAgent):
                 subject=f"Lead score updated to {score}",
                 body=rationale,
                 meta={"agent_run_id": str(run_id), "score": score},
+            )
+        )
+
+        db.add(
+            LeadScoreHistory(
+                workspace_id=workspace_id,
+                lead_id=lead.id,
+                contact_id=contact.id,
+                score=score,
+                score_rationale=rationale,
+                agent_run_id=run_id,
             )
         )
 

@@ -130,9 +130,12 @@ async def test_process_due_steps_advances_cursor(client: AsyncClient) -> None:
         enrollment = result.scalar_one()
         # Coerce next_step_at into the past so it's due.
         enrollment.next_step_at = datetime.now(UTC)
+        workspace_id = enrollment.workspace_id
         await db.commit()
 
-        count = await sequence_service.process_due_steps(db)
+        count = await sequence_service.process_due_steps(
+            db, workspace_id=workspace_id
+        )
         await db.commit()
 
         refreshed = await db.get(SequenceEnrollment, enrollment.id)
