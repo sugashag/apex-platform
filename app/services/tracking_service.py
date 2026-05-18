@@ -17,6 +17,7 @@ from app.models.form_submission import FormSubmission
 from app.models.lead import Lead, LeadStatus
 from app.models.visitor_session import VisitorSession
 from app.models.workspace import Workspace
+from app.services import workflow_engine
 from app.services.agent_queue import enqueue
 from app.services.attribution_service import (
     create_attribution_from_session,
@@ -323,6 +324,27 @@ async def process_form_submission(
     )
 
     await db.flush()
+
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=workspace_id,
+        trigger_type="form_submitted",
+        entity_type="contact",
+        entity_id=contact.id,
+        context={
+            "contact_id": str(contact.id),
+            "lead_id": str(lead.id),
+            "form_id": form_id,
+            "form_data": form_data,
+            "contact": {
+                "id": str(contact.id),
+                "email": contact.email,
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+                "source": contact.source,
+            },
+        },
+    )
 
     return {
         "contact_id": str(contact.id),

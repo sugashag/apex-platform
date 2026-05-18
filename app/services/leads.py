@@ -13,6 +13,7 @@ from app.models.deal import Deal
 from app.models.lead import Lead, LeadStatus
 from app.models.pipeline_stage import PipelineStage
 from app.schemas.lead import LeadConvertRequest
+from app.services import workflow_engine
 from app.services.agent_queue import enqueue
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,53 @@ async def after_lead_created(lead: Lead) -> None:
         lead.workspace_id,
         lead.id,
         trigger="lead_created",
+    )
+
+
+async def fire_lead_created_workflows(db: AsyncSession, lead: Lead) -> None:
+    """Run workflow triggers for lead creation. Caller commits."""
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=lead.workspace_id,
+        trigger_type="lead_created",
+        entity_type="lead",
+        entity_id=lead.id,
+        context={
+            "lead_id": str(lead.id),
+            "contact_id": str(lead.contact_id),
+            "lead": {
+                "id": str(lead.id),
+                "status": lead.status.value,
+                "score": lead.score,
+                "source": lead.source,
+            },
+        },
+    )
+
+
+async def fire_lead_status_changed_workflows(
+    db: AsyncSession,
+    lead: Lead,
+    *,
+    previous_status: LeadStatus,
+) -> None:
+    """Run workflow triggers when a lead status changes. Caller commits."""
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=lead.workspace_id,
+        trigger_type="lead_status_changed",
+        entity_type="lead",
+        entity_id=lead.id,
+        context={
+            "lead_id": str(lead.id),
+            "contact_id": str(lead.contact_id),
+            "lead": {
+                "id": str(lead.id),
+                "previous_status": previous_status.value,
+                "status": lead.status.value,
+                "score": lead.score,
+            },
+        },
     )
 
 

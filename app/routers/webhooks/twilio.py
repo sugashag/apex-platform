@@ -21,6 +21,7 @@ from app.models.call import Call, CallDirection, CallStatus
 from app.models.contact import Contact
 from app.models.sms_message import SmsDirection, SmsMessage, SmsStatus
 from app.models.workspace import Workspace
+from app.services import workflow_engine
 from app.services.agent_queue import enqueue
 from app.services.twilio_service import twilio_service
 
@@ -177,6 +178,26 @@ async def voice_status(
                     occurred_at=now,
                 )
             )
+        await workflow_engine.trigger_workflow(
+            db,
+            workspace_id=call.workspace_id,
+            trigger_type="call_completed",
+            entity_type="call",
+            entity_id=call.id,
+            context={
+                "call_id": str(call.id),
+                "contact_id": str(call.contact_id) if call.contact_id else None,
+                "deal_id": str(call.deal_id) if call.deal_id else None,
+                "call": {
+                    "id": str(call.id),
+                    "direction": call.direction.value,
+                    "status": call.status.value,
+                    "duration_seconds": call.duration_seconds,
+                    "from_number": call.from_number,
+                    "to_number": call.to_number,
+                },
+            },
+        )
     await db.commit()
     return {"status": "ok"}
 

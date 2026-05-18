@@ -19,7 +19,12 @@ from app.schemas.lead import (
     LeadResponse,
     LeadUpdate,
 )
-from app.services.leads import after_lead_created, convert_to_deal
+from app.services.leads import (
+    after_lead_created,
+    convert_to_deal,
+    fire_lead_created_workflows,
+    fire_lead_status_changed_workflows,
+)
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -48,6 +53,8 @@ async def create_lead(
         **payload.model_dump(),
     )
     db.add(lead)
+    await db.flush()
+    await fire_lead_created_workflows(db, lead)
     await db.commit()
     await db.refresh(lead)
     await after_lead_created(lead)
@@ -133,8 +140,15 @@ async def update_lead(
     current_user: CurrentUser,
 ) -> LeadResponse:
     lead = await _load_lead(db, lead_id, current_user.workspace_id)
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    previous_status = lead.status
+    updates = payload.model_dump(exclude_unset=True)
+    for key, value in updates.items():
         setattr(lead, key, value)
+    await db.flush()
+    if "status" in updates and updates["status"] != previous_status:
+        await fire_lead_status_changed_workflows(
+            db, lead, previous_status=previous_status
+        )
     await db.commit()
     await db.refresh(lead)
     return LeadResponse.model_validate(lead)

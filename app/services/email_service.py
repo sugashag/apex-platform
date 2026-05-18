@@ -224,6 +224,28 @@ class EmailService:
 
         await db.flush()
 
+        # Phase 5: stop active sequences and fire any email_received workflows
+        # before we return — both compose into the caller's transaction.
+        # Imports deferred to avoid circular module loading via workflow_actions
+        # → email_service.
+        from app.services import sequence_service, workflow_engine
+
+        await sequence_service.exit_on_reply(db, contact.id)
+        await workflow_engine.trigger_workflow(
+            db,
+            workspace_id=workspace_id,
+            trigger_type="email_received",
+            entity_type="thread",
+            entity_id=thread.id,
+            context={
+                "thread_id": str(thread.id),
+                "message_id": str(message.id),
+                "contact_id": str(contact.id),
+                "from_email": from_email,
+                "subject": subject,
+            },
+        )
+
         # Phase 3: enqueue the reply drafter so the rep sees a suggested
         # response when they open the thread. Best-effort — Redis-down or
         # an un-committed transaction will surface as a worker-side warning.

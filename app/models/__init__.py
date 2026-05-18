@@ -23,10 +23,27 @@ from app.models.message import Message, MessageDirection
 from app.models.netsuite import NetSuiteSyncLog, SyncDirection, SyncStatus
 from app.models.page_view import PageView
 from app.models.pipeline_stage import PipelineStage
+from app.models.sequence import Sequence
+from app.models.sequence_enrollment import (
+    SequenceEnrollment,
+    SequenceEnrollmentStatus,
+)
+from app.models.sequence_step import SequenceStep, SequenceStepType
 from app.models.sms_message import SmsDirection, SmsMessage, SmsStatus
 from app.models.thread import Thread, ThreadStatus
 from app.models.user import User, UserRole
 from app.models.visitor_session import VisitorSession
+from app.models.workflow import Workflow, WorkflowTriggerType
+from app.models.workflow_condition import (
+    WorkflowCondition,
+    WorkflowConditionOperator,
+)
+from app.models.workflow_run import WorkflowRun, WorkflowRunStatus
+from app.models.workflow_step import WorkflowActionType, WorkflowStep
+from app.models.workflow_step_run import (
+    WorkflowStepRun,
+    WorkflowStepRunStatus,
+)
 from app.models.workspace import Workspace
 
 __all__ = [
@@ -63,6 +80,11 @@ __all__ = [
     "NetSuiteSyncLog",
     "PageView",
     "PipelineStage",
+    "Sequence",
+    "SequenceEnrollment",
+    "SequenceEnrollmentStatus",
+    "SequenceStep",
+    "SequenceStepType",
     "SmsDirection",
     "SmsMessage",
     "SmsStatus",
@@ -74,5 +96,15 @@ __all__ = [
     "User",
     "UserRole",
     "VisitorSession",
+    "Workflow",
+    "WorkflowActionType",
+    "WorkflowCondition",
+    "WorkflowConditionOperator",
+    "WorkflowRun",
+    "WorkflowRunStatus",
+    "WorkflowStep",
+    "WorkflowStepRun",
+    "WorkflowStepRunStatus",
+    "WorkflowTriggerType",
     "Workspace",
 ]

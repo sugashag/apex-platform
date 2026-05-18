@@ -16,8 +16,10 @@ from app.routers import (
     leads,
     messages,
     pipeline_stages,
+    sequences,
     sms,
     tracking,
+    workflows,
     workspaces,
 )
 from app.routers.webhooks import posthog as webhooks_posthog
@@ -40,10 +42,12 @@ __all__ = [
     "leads",
     "messages",
     "pipeline_stages",
+    "sequences",
     "sms",
     "tracking",
     "webhooks_posthog",
     "webhooks_resend",
     "webhooks_twilio",
+    "workflows",
     "workspaces",
 ]

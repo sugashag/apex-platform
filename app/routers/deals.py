@@ -23,6 +23,7 @@ from app.schemas.deal import (
     DealResponse,
     DealUpdate,
 )
+from app.services import workflow_engine
 from app.services.deals import change_stage
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
@@ -93,6 +94,25 @@ async def create_deal(
             },
         )
         db.add(activity)
+
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=deal.workspace_id,
+        trigger_type="deal_created",
+        entity_type="deal",
+        entity_id=deal.id,
+        context={
+            "deal_id": str(deal.id),
+            "contact_id": str(deal.contact_id) if deal.contact_id else None,
+            "deal": {
+                "id": str(deal.id),
+                "name": deal.name,
+                "value_cents": deal.value_cents,
+                "currency": deal.currency,
+                "stage_id": str(stage.id) if stage else None,
+            },
+        },
+    )
 
     await db.commit()
     await db.refresh(deal)

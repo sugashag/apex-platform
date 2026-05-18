@@ -18,6 +18,7 @@ from app.schemas.contact import (
     ContactResponse,
     ContactUpdate,
 )
+from app.services import workflow_engine
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
@@ -35,13 +36,33 @@ async def create_contact(
     )
     db.add(contact)
     try:
-        await db.commit()
+        await db.flush()
     except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A contact with this email already exists in your workspace",
         ) from exc
+
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=contact.workspace_id,
+        trigger_type="contact_created",
+        entity_type="contact",
+        entity_id=contact.id,
+        context={
+            "contact_id": str(contact.id),
+            "contact": {
+                "id": str(contact.id),
+                "email": contact.email,
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+                "source": contact.source,
+            },
+        },
+    )
+
+    await db.commit()
     await db.refresh(contact)
     return ContactResponse.model_validate(contact)
 

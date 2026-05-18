@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.activity import Activity, ActivityType, ActorType
 from app.models.deal import CloseReason, Deal
 from app.models.pipeline_stage import PipelineStage
+from app.services import workflow_engine
 from app.services.attribution_service import link_deal_to_attributions
 
 logger = logging.getLogger(__name__)
@@ -72,4 +73,26 @@ async def change_stage(
     )
     db.add(activity)
     await db.flush()
+
+    await workflow_engine.trigger_workflow(
+        db,
+        workspace_id=deal.workspace_id,
+        trigger_type="deal_stage_changed",
+        entity_type="deal",
+        entity_id=deal.id,
+        context={
+            "deal_id": str(deal.id),
+            "contact_id": str(deal.contact_id) if deal.contact_id else None,
+            "deal": {
+                "id": str(deal.id),
+                "name": deal.name,
+                "value_cents": deal.value_cents,
+                "from_stage_id": str(previous_stage_id) if previous_stage_id else None,
+                "to_stage_id": str(new_stage.id),
+                "to_stage_name": new_stage.name,
+                "is_won": new_stage.is_won,
+                "is_lost": new_stage.is_lost,
+            },
+        },
+    )
     return activity
