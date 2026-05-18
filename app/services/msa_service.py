@@ -59,6 +59,35 @@ def _ensure_storage_dir() -> Path:
     return storage
 
 
+_UNICODE_PUNCT_MAP = str.maketrans(
+    {
+        "—": "-",
+        "–": "-",
+        "‒": "-",
+        "−": "-",
+        "“": '"',
+        "”": '"',
+        "„": '"',
+        "‘": "'",
+        "’": "'",
+        "‚": "'",
+        "…": "...",
+        "•": "*",
+        "·": "*",
+        " ": " ",
+    }
+)
+
+
+def _latin1_safe(text: str) -> str:
+    """Make text safe for fpdf2's built-in latin-1 fonts.
+
+    Translates common unicode punctuation to ASCII equivalents, then
+    replaces any remaining non-latin-1 characters with ``?``.
+    """
+    return text.translate(_UNICODE_PUNCT_MAP).encode("latin-1", "replace").decode("latin-1")
+
+
 def _render_pdf(body: str, output_path: Path) -> bool:
     """Render text body to a PDF. Returns True if fpdf2 produced a real PDF.
 
@@ -67,7 +96,7 @@ def _render_pdf(body: str, output_path: Path) -> bool:
     the document_url points to a readable file.
     """
     try:
-        from fpdf import FPDF  # type: ignore[import-not-found]
+        from fpdf import FPDF
     except ImportError:
         txt_path = output_path.with_suffix(".txt")
         txt_path.write_text(body, encoding="utf-8")
@@ -76,16 +105,14 @@ def _render_pdf(body: str, output_path: Path) -> bool:
     pdf = FPDF(format="A4", unit="mm")
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "APEX — Master Services Agreement", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, "APEX - Master Services Agreement", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
     pdf.set_font("Helvetica", "", 11)
-    # fpdf2's default font doesn't speak unicode beyond latin-1; transliterate.
-    safe_body = body.encode("latin-1", "replace").decode("latin-1")
-    for line in safe_body.splitlines():
+    for line in _latin1_safe(body).splitlines():
         if not line.strip():
             pdf.ln(4)
             continue
-        pdf.multi_cell(0, 6, line)
+        pdf.multi_cell(0, 6, line, new_x="LMARGIN", new_y="NEXT")
     pdf.output(str(output_path))
     return True
 
