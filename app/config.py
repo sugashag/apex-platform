@@ -42,6 +42,23 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Twilio — optional; services degrade gracefully when unset.
+    TWILIO_ACCOUNT_SID: str | None = None
+    TWILIO_AUTH_TOKEN: str | None = None
+    TWILIO_FROM_NUMBER: str | None = None
+    TWILIO_TWIML_APP_SID: str | None = None
+    TWILIO_API_KEY_SID: str | None = None
+    TWILIO_API_KEY_SECRET: str | None = None
+
+    # Resend — optional; emails are mocked in development when unset.
+    RESEND_API_KEY: str | None = None
+    RESEND_WEBHOOK_SECRET: str | None = None
+    RESEND_FROM_EMAIL: str | None = None
+
+    # SLA defaults — applied to new inbound threads.
+    SLA_FIRST_RESPONSE_MINUTES: int = 60
+    SLA_RESOLUTION_MINUTES: int = 480
+
 
 @lru_cache
 def get_settings() -> Settings:

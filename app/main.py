@@ -10,13 +10,20 @@ from app.database import engine
 from app.middleware import WorkspaceContextMiddleware
 from app.routers import (
     activities,
+    assignment_rules,
     auth,
+    calls,
     companies,
     contacts,
     deals,
     health,
+    inbox,
     leads,
+    messages,
     pipeline_stages,
+    sms,
+    webhooks_resend,
+    webhooks_twilio,
     workspaces,
 )
 
@@ -51,6 +58,17 @@ app.include_router(pipeline_stages.router, prefix=API_V1_PREFIX)
 app.include_router(deals.router, prefix=API_V1_PREFIX)
 app.include_router(leads.router, prefix=API_V1_PREFIX)
 app.include_router(activities.router, prefix=API_V1_PREFIX)
+
+# Communications routes (Phase 2) — versioned under /api/v1.
+app.include_router(inbox.router, prefix=API_V1_PREFIX)
+app.include_router(messages.router, prefix=API_V1_PREFIX)
+app.include_router(calls.router, prefix=API_V1_PREFIX)
+app.include_router(sms.router, prefix=API_V1_PREFIX)
+app.include_router(assignment_rules.router, prefix=API_V1_PREFIX)
+
+# Webhooks live outside /api/v1 so external providers hit a stable path.
+app.include_router(webhooks_twilio.router)
+app.include_router(webhooks_resend.router)
 
 
 @app.get("/", include_in_schema=False)
