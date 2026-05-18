@@ -1,5 +1,6 @@
 """Authentication routes: register, login, me."""
 
+import logging
 import secrets
 
 from fastapi import APIRouter, HTTPException, status
@@ -10,8 +11,11 @@ from app.dependencies import CurrentUser, DbSession
 from app.models.user import User, UserRole
 from app.models.workspace import Workspace
 from app.schemas.user import TokenResponse, UserLogin, UserRead, UserRegister
+from app.services import billing_service, onboarding_service
 from app.services.auth import create_access_token, hash_password, verify_password
 from app.services.pipeline_stages import seed_default_pipeline_stages
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -45,6 +49,34 @@ async def register(payload: UserRegister, db: DbSession) -> TokenResponse:
         role=UserRole.ADMIN,
     )
     db.add(user)
+    await db.flush()
+
+    # Phase 8: every new workspace starts with an onboarding checklist and a
+    # 14-day trial of the Starter plan. If the Starter plan row is missing
+    # (e.g. a test fixture that didn't run the seed migration) we log and
+    # continue — the trial gate falls back to "unlimited" without a plan.
+    await onboarding_service.get_or_create_checklist(db, workspace.id)
+    starter_plan = await billing_service.get_plan_by_slug(
+        db, billing_service.STARTER_PLAN_SLUG
+    )
+    if starter_plan is not None:
+        await billing_service.start_trial_subscription(
+            db,
+            workspace_id=workspace.id,
+            plan=starter_plan,
+            billing_email=payload.email,
+            billing_name=(
+                f"{payload.first_name} {payload.last_name}".strip()
+                if payload.first_name or payload.last_name
+                else None
+            ),
+        )
+    else:
+        logger.warning(
+            "Starter plan not found during registration of workspace %s; "
+            "skipping trial subscription creation.",
+            workspace.id,
+        )
 
     try:
         await db.commit()

@@ -6,12 +6,14 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.rbac import require_manager_or_above
 from app.models.lead import Lead
 from app.models.pipeline_forecast import ForecastPeriod, PipelineForecast
+from app.models.user import User
 from app.services import reporting_service
 from app.services.attribution_service import get_source_report
 
@@ -105,7 +107,7 @@ async def report_revenue_by_month(
 @router.get("/revenue/by-rep")
 async def report_revenue_by_rep(
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: User = Depends(require_manager_or_above()),
     days: Annotated[int, Query(ge=1, le=365)] = 90,
 ) -> list[dict[str, Any]]:
     return await reporting_service.get_revenue_by_rep(

@@ -3,6 +3,7 @@
 from app.models.activity import Activity, ActivityType, ActorType
 from app.models.agent_run import AgentRun, AgentRunStatus, AgentType
 from app.models.ai_draft import AiDraft, AiDraftStatus, AiDraftType
+from app.models.api_key import ApiKey
 from app.models.assignment_rule import AssignmentConditionOperator, AssignmentRule
 from app.models.attribution import Attribution, TouchType
 from app.models.base import Base
@@ -25,10 +26,13 @@ from app.models.message import Message, MessageDirection
 from app.models.msa_document import MsaDocument, MsaStatus
 from app.models.netsuite import NetSuiteSyncLog, SyncDirection, SyncStatus
 from app.models.netsuite_config import NetSuiteConfig, NetSuiteTestStatus
+from app.models.onboarding_checklist import CHECKLIST_STEPS, OnboardingChecklist
 from app.models.page_view import PageView
+from app.models.partner_referral import PartnerReferral, PartnerReferralStatus
 from app.models.payment import Payment, PaymentStatus
 from app.models.pipeline_forecast import ForecastPeriod, PipelineForecast
 from app.models.pipeline_stage import PipelineStage
+from app.models.plan import Plan
 from app.models.sequence import Sequence
 from app.models.sequence_enrollment import (
     SequenceEnrollment,
@@ -51,8 +55,10 @@ from app.models.workflow_step_run import (
     WorkflowStepRunStatus,
 )
 from app.models.workspace import Workspace
+from app.models.workspace_subscription import SubscriptionStatus, WorkspaceSubscription
 
 __all__ = [
+    "CHECKLIST_STEPS",
     "Activity",
     "ActivityType",
     "ActorType",
@@ -62,6 +68,7 @@ __all__ = [
     "AiDraft",
     "AiDraftStatus",
     "AiDraftType",
+    "ApiKey",
     "AssignmentConditionOperator",
     "AssignmentRule",
     "Attribution",
@@ -91,11 +98,15 @@ __all__ = [
     "NetSuiteConfig",
     "NetSuiteSyncLog",
     "NetSuiteTestStatus",
+    "OnboardingChecklist",
     "PageView",
+    "PartnerReferral",
+    "PartnerReferralStatus",
     "Payment",
     "PaymentStatus",
     "PipelineForecast",
     "PipelineStage",
+    "Plan",
     "Sequence",
     "SequenceEnrollment",
     "SequenceEnrollmentStatus",
@@ -104,6 +115,7 @@ __all__ = [
     "SmsDirection",
     "SmsMessage",
     "SmsStatus",
+    "SubscriptionStatus",
     "SyncDirection",
     "SyncStatus",
     "Thread",
@@ -123,4 +135,5 @@ __all__ = [
     "WorkflowStepRunStatus",
     "WorkflowTriggerType",
     "Workspace",
+    "WorkspaceSubscription",
 ]

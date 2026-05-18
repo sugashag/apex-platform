@@ -8,6 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 
 from app.dependencies import CurrentUser, DbSession
+from app.middleware.rbac import require_manager_or_above
+from app.models.user import User
 from app.models.workflow import Workflow
 from app.models.workflow_condition import WorkflowCondition
 from app.models.workflow_run import WorkflowRun, WorkflowRunStatus
@@ -84,7 +86,7 @@ async def _build_detail(
 async def create_workflow(
     payload: WorkflowCreate,
     db: DbSession,
-    current_user: CurrentUser,
+    current_user: User = Depends(require_manager_or_above()),
 ) -> WorkflowDetailResponse:
     workflow = Workflow(
         workspace_id=current_user.workspace_id,

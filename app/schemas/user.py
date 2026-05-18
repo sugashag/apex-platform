@@ -42,3 +42,32 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"  # noqa: S105 — OAuth2 token type, not a credential
     expires_in: int
+
+
+class UserInvite(BaseModel):
+    """Body for ``POST /users/invite``."""
+
+    email: EmailStr
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
+    role: UserRole = UserRole.REP
+
+
+class UserInviteResponse(BaseModel):
+    """Response from invite — includes the temporary password (returned once)."""
+
+    user: UserRead
+    temporary_password: str
+
+
+class UserUpdate(BaseModel):
+    """Body for ``PATCH /users/{id}``."""
+
+    role: UserRole | None = None
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
+    is_active: bool | None = None
+
+
+class UserListResponse(BaseModel):
+    items: list[UserRead]
