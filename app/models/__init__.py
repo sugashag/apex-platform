@@ -1,6 +1,8 @@
 """SQLAlchemy ORM models for APEX."""
 
 from app.models.activity import Activity, ActivityType, ActorType
+from app.models.agent_run import AgentRun, AgentRunStatus, AgentType
+from app.models.ai_draft import AiDraft, AiDraftStatus, AiDraftType
 from app.models.assignment_rule import AssignmentConditionOperator, AssignmentRule
 from app.models.base import Base
 from app.models.call import (
@@ -27,6 +29,12 @@ __all__ = [
     "Activity",
     "ActivityType",
     "ActorType",
+    "AgentRun",
+    "AgentRunStatus",
+    "AgentType",
+    "AiDraft",
+    "AiDraftStatus",
+    "AiDraftType",
     "AssignmentConditionOperator",
     "AssignmentRule",
     "Base",

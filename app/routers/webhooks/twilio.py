@@ -21,6 +21,7 @@ from app.models.call import Call, CallDirection, CallStatus
 from app.models.contact import Contact
 from app.models.sms_message import SmsDirection, SmsMessage, SmsStatus
 from app.models.workspace import Workspace
+from app.services.agent_queue import enqueue
 from app.services.twilio_service import twilio_service
 
 router = APIRouter(prefix="/webhooks/twilio", tags=["webhooks"])
@@ -202,7 +203,21 @@ async def voice_recording(
 
     call.recording_url = params.get("RecordingUrl")
     call.recording_sid = params.get("RecordingSid")
+    # Twilio may send a transcript in the same recording callback when
+    # `transcribe="true"` is set on the recording verb.
+    transcript = params.get("TranscriptionText")
+    if transcript and not call.transcript:
+        call.transcript = transcript
     await db.commit()
+
+    if call.transcript and call.ai_summary is None:
+        await enqueue(
+            "run_call_summarizer",
+            call.workspace_id,
+            call.id,
+            trigger="call_recording",
+        )
+
     return {"status": "ok"}
 
 

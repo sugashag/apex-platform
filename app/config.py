@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     SLA_FIRST_RESPONSE_MINUTES: int = 60
     SLA_RESOLUTION_MINUTES: int = 480
 
+    # Anthropic — optional; agents degrade to a mock response when unset.
+    ANTHROPIC_API_KEY: str | None = None
+
+    # ARQ background worker.
+    WORKER_MAX_JOBS: int = 10
+    WORKER_JOB_TIMEOUT: int = 120
+
 
 @lru_cache
 def get_settings() -> Settings:

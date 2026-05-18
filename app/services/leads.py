@@ -1,5 +1,6 @@
-"""Lead services — conversion into deals."""
+"""Lead services — creation hook + conversion into deals."""
 
+import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -12,6 +13,23 @@ from app.models.deal import Deal
 from app.models.lead import Lead, LeadStatus
 from app.models.pipeline_stage import PipelineStage
 from app.schemas.lead import LeadConvertRequest
+from app.services.agent_queue import enqueue
+
+logger = logging.getLogger(__name__)
+
+
+async def after_lead_created(lead: Lead) -> None:
+    """Enqueue the lead scorer for a freshly created lead.
+
+    Best-effort: if Redis is unavailable the call is logged + swallowed so
+    lead creation never blocks on the queue.
+    """
+    await enqueue(
+        "run_lead_scorer",
+        lead.workspace_id,
+        lead.id,
+        trigger="lead_created",
+    )
 
 
 async def convert_to_deal(

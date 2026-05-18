@@ -24,6 +24,7 @@ from app.models.contact import Contact
 from app.models.email_account import EmailAccount
 from app.models.message import Message, MessageDirection
 from app.models.thread import Thread
+from app.services.agent_queue import enqueue
 from app.services.contacts import get_or_create_by_email
 
 logger = logging.getLogger(__name__)
@@ -222,7 +223,32 @@ class EmailService:
         )
 
         await db.flush()
+
+        # Phase 3: enqueue the reply drafter so the rep sees a suggested
+        # response when they open the thread. Best-effort — Redis-down or
+        # an un-committed transaction will surface as a worker-side warning.
+        await enqueue(
+            "run_reply_drafter",
+            workspace_id,
+            thread.id,
+            trigger="inbound_message",
+        )
+
         return thread, message, contact
+
+
+async def after_inbound_processed(thread: Thread) -> None:
+    """Enqueue the reply drafter after an inbound message lands on a thread.
+
+    Best-effort: caller must have committed the transaction so the worker
+    can see the new message. Redis-down is logged + swallowed.
+    """
+    await enqueue(
+        "run_reply_drafter",
+        thread.workspace_id,
+        thread.id,
+        trigger="inbound_message",
+    )
 
 
 def validate_resend_signature(
