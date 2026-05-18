@@ -260,7 +260,7 @@ async def tracking_pixel(
     Always returns the GIF — even on invalid token — so attackers cannot
     probe for valid tokens by image-load diffing.
     """
-    if (rl := _rate_limited(request, "pixel")) is not None:
+    if _rate_limited(request, "pixel") is not None:
         # Silently drop without recording — still serve the pixel.
         return Response(content=_TRANSPARENT_GIF, media_type="image/gif")
 
