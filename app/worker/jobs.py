@@ -19,7 +19,12 @@ from app.agents.outbound_drafter import OutboundDrafterAgent
 from app.agents.pipeline_forecaster import PipelineForecasterAgent
 from app.agents.reply_drafter import ReplyDrafterAgent
 from app.database import SessionLocal
-from app.services import reporting_service, sequence_service, workflow_engine
+from app.services import (
+    netsuite_sync_service,
+    reporting_service,
+    sequence_service,
+    workflow_engine,
+)
 
 
 def _as_uuid(value: Any) -> UUID:
@@ -269,6 +274,87 @@ async def refresh_dashboard_metrics_for_active_workspaces(
         await redis.enqueue_job("refresh_dashboard_metrics", str(ws_id))
         fired += 1
     return fired
+
+
+async def sync_company_to_netsuite(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    company_id: Any,
+    **_: Any,
+) -> str:
+    """Sync a Company to NetSuite as a Customer."""
+    async with SessionLocal() as db:
+        log = await netsuite_sync_service.sync_company_as_customer(
+            db, _as_uuid(workspace_id), _as_uuid(company_id)
+        )
+        await db.commit()
+        return str(log.id)
+
+
+async def sync_deal_to_netsuite(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    deal_id: Any,
+    **_: Any,
+) -> str:
+    """Sync a Deal to NetSuite as a Sales Order."""
+    async with SessionLocal() as db:
+        log = await netsuite_sync_service.sync_deal_as_sales_order(
+            db, _as_uuid(workspace_id), _as_uuid(deal_id)
+        )
+        await db.commit()
+        return str(log.id)
+
+
+async def sync_payment_to_netsuite(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    payment_id: Any,
+    **_: Any,
+) -> str:
+    """Sync a Payment to NetSuite as an Invoice."""
+    async with SessionLocal() as db:
+        log = await netsuite_sync_service.sync_payment_as_invoice(
+            db, _as_uuid(workspace_id), _as_uuid(payment_id)
+        )
+        await db.commit()
+        return str(log.id)
+
+
+async def sync_msa_to_netsuite(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    msa_id: Any,
+    **_: Any,
+) -> str:
+    """Upload an MSA PDF to NetSuite File Cabinet and attach to the Sales Order."""
+    async with SessionLocal() as db:
+        log = await netsuite_sync_service.sync_msa_document(
+            db, _as_uuid(workspace_id), _as_uuid(msa_id)
+        )
+        await db.commit()
+        return str(log.id)
+
+
+async def retry_netsuite_syncs(
+    ctx: dict[str, Any], *_: Any, **__: Any
+) -> int:
+    """Cron fan-out: retry all failed NetSuite syncs across workspaces."""
+    from sqlalchemy import select
+
+    from app.models.workspace import Workspace
+
+    retried = 0
+    async with SessionLocal() as db:
+        ws_rows = (
+            await db.execute(
+                select(Workspace.id).where(Workspace.is_active.is_(True))
+            )
+        ).all()
+        for (ws_id,) in ws_rows:
+            retried += await netsuite_sync_service.retry_failed_syncs(db, ws_id)
+        await db.commit()
+    return retried
 
 
 async def check_sla_breaches(ctx: dict[str, Any], *_: Any, **__: Any) -> int:

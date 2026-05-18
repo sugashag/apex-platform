@@ -16,6 +16,9 @@ from app.routers import (
     inbox,
     leads,
     messages,
+    msa,
+    netsuite,
+    payments,
     pipeline_stages,
     reports,
     sequences,
@@ -26,6 +29,7 @@ from app.routers import (
 )
 from app.routers.webhooks import posthog as webhooks_posthog
 from app.routers.webhooks import resend as webhooks_resend
+from app.routers.webhooks import stripe as webhooks_stripe
 from app.routers.webhooks import twilio as webhooks_twilio
 
 __all__ = [
@@ -44,6 +48,9 @@ __all__ = [
     "inbox",
     "leads",
     "messages",
+    "msa",
+    "netsuite",
+    "payments",
     "pipeline_stages",
     "reports",
     "sequences",
@@ -51,6 +58,7 @@ __all__ = [
     "tracking",
     "webhooks_posthog",
     "webhooks_resend",
+    "webhooks_stripe",
     "webhooks_twilio",
     "workflows",
     "workspaces",

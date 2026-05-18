@@ -13,6 +13,7 @@ from app.worker.jobs import (
     process_workflow_step_queue,
     refresh_dashboard_metrics,
     refresh_dashboard_metrics_for_active_workspaces,
+    retry_netsuite_syncs,
     run_call_summarizer,
     run_lead_scorer,
     run_objection_handler,
@@ -20,6 +21,10 @@ from app.worker.jobs import (
     run_pipeline_forecaster,
     run_pipeline_forecaster_for_active_workspaces,
     run_reply_drafter,
+    sync_company_to_netsuite,
+    sync_deal_to_netsuite,
+    sync_msa_to_netsuite,
+    sync_payment_to_netsuite,
 )
 
 
@@ -41,6 +46,11 @@ class WorkerSettings:
         process_sequences,
         process_workflow_step_queue,
         check_sla_breaches,
+        sync_company_to_netsuite,
+        sync_deal_to_netsuite,
+        sync_payment_to_netsuite,
+        sync_msa_to_netsuite,
+        retry_netsuite_syncs,
     ]
     # Cron jobs: SLA every 5 minutes, sequences every 15, workflow catch-up
     # every minute so delayed steps fire on time without per-step Redis
@@ -60,6 +70,8 @@ class WorkerSettings:
             refresh_dashboard_metrics_for_active_workspaces,
             minute={0},
         ),
+        # Retry failed NetSuite syncs every 30 minutes.
+        cron(retry_netsuite_syncs, minute={0, 30}),
     ]
     max_jobs = settings.WORKER_MAX_JOBS
     job_timeout = settings.WORKER_JOB_TIMEOUT
