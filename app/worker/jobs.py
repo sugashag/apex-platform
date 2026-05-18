@@ -16,9 +16,10 @@ from app.agents.call_summarizer import CallSummarizerAgent
 from app.agents.lead_scorer import LeadScorerAgent
 from app.agents.objection_handler import ObjectionHandlerAgent
 from app.agents.outbound_drafter import OutboundDrafterAgent
+from app.agents.pipeline_forecaster import PipelineForecasterAgent
 from app.agents.reply_drafter import ReplyDrafterAgent
 from app.database import SessionLocal
-from app.services import sequence_service, workflow_engine
+from app.services import reporting_service, sequence_service, workflow_engine
 
 
 def _as_uuid(value: Any) -> UUID:
@@ -181,6 +182,93 @@ async def process_workflow_step_queue(
     async with SessionLocal() as db:
         count = await workflow_engine.process_due_step_runs(db)
     return count
+
+
+async def run_pipeline_forecaster(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    trigger: str = "weekly_cron",
+    **kwargs: Any,
+) -> str:
+    """Generate a fresh PipelineForecast for the workspace."""
+    async with SessionLocal() as db:
+        agent = PipelineForecasterAgent()
+        run = await agent.execute(
+            db,
+            workspace_id=_as_uuid(workspace_id),
+            entity_id=None,
+            entity_type="workspace",
+            trigger=trigger,
+            **kwargs,
+        )
+        await db.commit()
+        return str(run.id)
+
+
+async def refresh_dashboard_metrics(
+    ctx: dict[str, Any],
+    workspace_id: Any,
+    **_: Any,
+) -> str:
+    """Recompute and cache the dashboard payload for the workspace."""
+    async with SessionLocal() as db:
+        await reporting_service.compute_and_cache_metrics(
+            db, _as_uuid(workspace_id)
+        )
+        await db.commit()
+        return str(workspace_id)
+
+
+async def run_pipeline_forecaster_for_active_workspaces(
+    ctx: dict[str, Any], *_: Any, **__: Any
+) -> int:
+    """Cron fan-out: enqueue a forecaster run for each active workspace."""
+    from sqlalchemy import select
+
+    from app.models.workspace import Workspace
+
+    redis = ctx.get("redis")
+    if redis is None:
+        return 0
+
+    async with SessionLocal() as db:
+        rows = (
+            await db.execute(
+                select(Workspace.id).where(Workspace.is_active.is_(True))
+            )
+        ).all()
+    fired = 0
+    for (ws_id,) in rows:
+        await redis.enqueue_job(
+            "run_pipeline_forecaster", str(ws_id), trigger="weekly_cron"
+        )
+        fired += 1
+    return fired
+
+
+async def refresh_dashboard_metrics_for_active_workspaces(
+    ctx: dict[str, Any], *_: Any, **__: Any
+) -> int:
+    """Cron fan-out: enqueue a dashboard refresh for each active workspace."""
+    from sqlalchemy import select
+
+    from app.models.workspace import Workspace
+
+    redis = ctx.get("redis")
+    if redis is None:
+        return 0
+
+    async with SessionLocal() as db:
+        rows = (
+            await db.execute(
+                select(Workspace.id).where(Workspace.is_active.is_(True))
+            )
+        ).all()
+    fired = 0
+    for (ws_id,) in rows:
+        await redis.enqueue_job("refresh_dashboard_metrics", str(ws_id))
+        fired += 1
+    return fired
 
 
 async def check_sla_breaches(ctx: dict[str, Any], *_: Any, **__: Any) -> int:

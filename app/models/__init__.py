@@ -15,13 +15,16 @@ from app.models.call import (
 )
 from app.models.company import Company
 from app.models.contact import Contact, EmailStatus
+from app.models.dashboard_metric_cache import DashboardMetricCache
 from app.models.deal import CloseReason, Deal
 from app.models.email_account import EmailAccount, EmailProvider
 from app.models.form_submission import FormSubmission
 from app.models.lead import Lead, LeadStatus
+from app.models.lead_score_history import LeadScoreHistory
 from app.models.message import Message, MessageDirection
 from app.models.netsuite import NetSuiteSyncLog, SyncDirection, SyncStatus
 from app.models.page_view import PageView
+from app.models.pipeline_forecast import ForecastPeriod, PipelineForecast
 from app.models.pipeline_stage import PipelineStage
 from app.models.sequence import Sequence
 from app.models.sequence_enrollment import (
@@ -68,17 +71,21 @@ __all__ = [
     "CloseReason",
     "Company",
     "Contact",
+    "DashboardMetricCache",
     "Deal",
     "EmailAccount",
     "EmailProvider",
     "EmailStatus",
+    "ForecastPeriod",
     "FormSubmission",
     "Lead",
+    "LeadScoreHistory",
     "LeadStatus",
     "Message",
     "MessageDirection",
     "NetSuiteSyncLog",
     "PageView",
+    "PipelineForecast",
     "PipelineStage",
     "Sequence",
     "SequenceEnrollment",

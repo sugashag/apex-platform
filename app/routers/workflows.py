@@ -1,7 +1,7 @@
 """Workflow CRUD + run inspection + manual trigger + step approval."""
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -244,7 +244,7 @@ async def _start_run_for_workflow(
     workflow: Workflow,
     entity_type: str | None,
     entity_id: UUID | None,
-    context: dict,
+    context: dict[str, Any],
 ) -> WorkflowRun | None:
     """Materialise a WorkflowRun + first step run for a single workflow.
 

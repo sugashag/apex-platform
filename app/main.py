@@ -19,11 +19,13 @@ from app.routers import (
     contacts,
     deals,
     drafts,
+    forecasts,
     health,
     inbox,
     leads,
     messages,
     pipeline_stages,
+    reports,
     sequences,
     sms,
     tracking,
@@ -85,6 +87,10 @@ app.include_router(workflows.router, prefix=API_V1_PREFIX)
 app.include_router(workflows.runs_router, prefix=API_V1_PREFIX)
 app.include_router(sequences.router, prefix=API_V1_PREFIX)
 app.include_router(sequences.enrollments_router, prefix=API_V1_PREFIX)
+
+# Intelligence + Reporting (Phase 6) — versioned under /api/v1.
+app.include_router(reports.router, prefix=API_V1_PREFIX)
+app.include_router(forecasts.router, prefix=API_V1_PREFIX)
 
 # Public marketing-site tracking endpoints — UNVERSIONED so the JS snippet
 # embedded on customers' marketing sites never needs to change when we ship
