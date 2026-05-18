@@ -181,13 +181,16 @@ async def _dispatch_event(db: DbSession, event: dict[str, Any]) -> bool:
 
     if event_type == "form_submit":
         form_id = props.get("form_id") or "posthog_form"
-        form_data = props.get("form_data") if isinstance(props.get("form_data"), dict) else props
+        raw_form_data = props.get("form_data")
+        form_data: dict[str, Any] = (
+            dict(raw_form_data) if isinstance(raw_form_data, dict) else dict(props)
+        )
         result = await process_form_submission(
             db,
             workspace_id=workspace.id,
             session_id=session_id,
             form_id=str(form_id),
-            form_data=dict(form_data),
+            form_data=form_data,
             page_url=props.get("$current_url") or props.get("page_url"),
         )
         await db.commit()
@@ -209,14 +212,14 @@ async def _dispatch_event(db: DbSession, event: dict[str, Any]) -> bool:
         )
         # Make sure attribution exists so this conversion is countable.
         if await resolve_first_touch(db, workspace.id, contact.id) is None:
-            session = await _find_session_by_external_id(
+            visitor_session = await _find_session_by_external_id(
                 db, workspace.id, session_id
             )
             await create_attribution_from_session(
                 db,
                 workspace_id=workspace.id,
                 contact_id=contact.id,
-                session=session,
+                session=visitor_session,
                 touch_type=TouchType.FIRST_TOUCH,
             )
         db.add(

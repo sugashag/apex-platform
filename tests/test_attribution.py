@@ -22,7 +22,9 @@ def _reset_rate_limiter() -> None:
     _rate_limiter.reset()
 
 
-async def _workspace_token(client: AsyncClient, slug_prefix: str = "attr") -> tuple[str, str, dict[str, str]]:
+async def _workspace_token(
+    client: AsyncClient, slug_prefix: str = "attr"
+) -> tuple[str, str, dict[str, str]]:
     ws = await register_workspace(client, slug_prefix=slug_prefix)
     async with SessionLocal() as session:
         result = await session.execute(

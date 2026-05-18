@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import CursorResult, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attribution import Attribution, TouchType
@@ -87,14 +87,17 @@ async def link_deal_to_attributions(
 
     Returns the number of rows updated. Caller commits.
     """
-    result = await db.execute(
-        update(Attribution)
-        .where(
-            Attribution.workspace_id == workspace_id,
-            Attribution.contact_id == contact_id,
-            Attribution.deal_id.is_(None),
-        )
-        .values(deal_id=deal_id)
+    result = cast(
+        CursorResult[Any],
+        await db.execute(
+            update(Attribution)
+            .where(
+                Attribution.workspace_id == workspace_id,
+                Attribution.contact_id == contact_id,
+                Attribution.deal_id.is_(None),
+            )
+            .values(deal_id=deal_id)
+        ),
     )
     return int(result.rowcount or 0)
 
