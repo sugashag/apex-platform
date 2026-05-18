@@ -1,5 +1,7 @@
 """Authentication routes: register, login, me."""
 
+import secrets
+
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -27,6 +29,7 @@ async def register(payload: UserRegister, db: DbSession) -> TokenResponse:
     workspace = Workspace(
         name=payload.workspace_name,
         slug=payload.workspace_slug,
+        tracking_token=secrets.token_urlsafe(32),
     )
     db.add(workspace)
     await db.flush()

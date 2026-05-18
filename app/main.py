@@ -12,6 +12,7 @@ from app.routers import (
     activities,
     agents,
     assignment_rules,
+    attribution,
     auth,
     calls,
     companies,
@@ -24,6 +25,8 @@ from app.routers import (
     messages,
     pipeline_stages,
     sms,
+    tracking,
+    webhooks_posthog,
     webhooks_resend,
     webhooks_twilio,
     workspaces,
@@ -72,9 +75,18 @@ app.include_router(assignment_rules.router, prefix=API_V1_PREFIX)
 app.include_router(agents.router, prefix=API_V1_PREFIX)
 app.include_router(drafts.router, prefix=API_V1_PREFIX)
 
+# Attribution + Website Integration (Phase 4) — versioned under /api/v1.
+app.include_router(attribution.router, prefix=API_V1_PREFIX)
+
+# Public marketing-site tracking endpoints — UNVERSIONED so the JS snippet
+# embedded on customers' marketing sites never needs to change when we ship
+# a new API version. Auth is via the public tracking_token, not JWT.
+app.include_router(tracking.router)
+
 # Webhooks live outside /api/v1 so external providers hit a stable path.
 app.include_router(webhooks_twilio.router)
 app.include_router(webhooks_resend.router)
+app.include_router(webhooks_posthog.router)
 
 
 @app.get("/", include_in_schema=False)

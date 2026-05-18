@@ -66,6 +66,13 @@ class Settings(BaseSettings):
     WORKER_MAX_JOBS: int = 10
     WORKER_JOB_TIMEOUT: int = 120
 
+    # PostHog — server-side webhook ingestion.
+    POSTHOG_WEBHOOK_SECRET: str | None = None
+
+    # Attribution / website integration.
+    API_BASE_URL: str = "http://localhost:8000"
+    TRACKING_RATE_LIMIT_PER_MINUTE: int = 100
+
 
 @lru_cache
 def get_settings() -> Settings:

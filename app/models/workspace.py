@@ -30,6 +30,13 @@ class Workspace(Base):
     netsuite_token_id: Mapped[str | None] = mapped_column(String(500), nullable=True)
     netsuite_token_secret: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Public, read-only token used by the marketing-site JS snippet to identify
+    # the workspace when posting attribution events. Safe to expose in browser
+    # source — it grants only the tracking endpoints, never API access.
+    tracking_token: Mapped[str | None] = mapped_column(
+        String(64), unique=True, nullable=True
+    )
+
     users: Mapped[list["User"]] = relationship(
         back_populates="workspace",
         cascade="all, delete-orphan",

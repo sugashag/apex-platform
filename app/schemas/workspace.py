@@ -18,5 +18,14 @@ class WorkspaceRead(BaseModel):
     name: str
     slug: str
     is_active: bool
+    tracking_token: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class TrackingSnippetResponse(BaseModel):
+    """Marketing-site JS snippet for a workspace."""
+
+    tracking_token: str
+    api_base_url: str
+    snippet: str
