@@ -24,11 +24,13 @@ from app.routers import (
     leads,
     messages,
     pipeline_stages,
+    sequences,
     sms,
     tracking,
     webhooks_posthog,
     webhooks_resend,
     webhooks_twilio,
+    workflows,
     workspaces,
 )
 
@@ -77,6 +79,12 @@ app.include_router(drafts.router, prefix=API_V1_PREFIX)
 
 # Attribution + Website Integration (Phase 4) — versioned under /api/v1.
 app.include_router(attribution.router, prefix=API_V1_PREFIX)
+
+# Automation + Workflows (Phase 5) — versioned under /api/v1.
+app.include_router(workflows.router, prefix=API_V1_PREFIX)
+app.include_router(workflows.runs_router, prefix=API_V1_PREFIX)
+app.include_router(sequences.router, prefix=API_V1_PREFIX)
+app.include_router(sequences.enrollments_router, prefix=API_V1_PREFIX)
 
 # Public marketing-site tracking endpoints — UNVERSIONED so the JS snippet
 # embedded on customers' marketing sites never needs to change when we ship

@@ -18,6 +18,7 @@ from app.agents.objection_handler import ObjectionHandlerAgent
 from app.agents.outbound_drafter import OutboundDrafterAgent
 from app.agents.reply_drafter import ReplyDrafterAgent
 from app.database import SessionLocal
+from app.services import sequence_service, workflow_engine
 
 
 def _as_uuid(value: Any) -> UUID:
@@ -143,3 +144,103 @@ async def run_objection_handler(
         )
         await db.commit()
         return str(run.id)
+
+
+async def execute_workflow_step(
+    ctx: dict[str, Any],
+    _workspace_id: Any,
+    step_run_id: Any,
+    **_: Any,
+) -> str:
+    """Run one WorkflowStepRun. The engine commits internally."""
+    async with SessionLocal() as db:
+        await workflow_engine.execute_step(db, _as_uuid(step_run_id))
+    return str(step_run_id)
+
+
+async def process_sequences(
+    ctx: dict[str, Any],
+    workspace_id: Any = None,
+    *_: Any,
+    **__: Any,
+) -> int:
+    """Advance any sequence enrollments whose next_step_at has elapsed."""
+    async with SessionLocal() as db:
+        count = await sequence_service.process_due_steps(
+            db,
+            workspace_id=_as_optional_uuid(workspace_id),
+        )
+        await db.commit()
+        return count
+
+
+async def process_workflow_step_queue(
+    ctx: dict[str, Any], *_: Any, **__: Any
+) -> int:
+    """Catch-up scheduler: enqueue any pending step runs whose execute_at is due."""
+    async with SessionLocal() as db:
+        count = await workflow_engine.process_due_step_runs(db)
+    return count
+
+
+async def check_sla_breaches(ctx: dict[str, Any], *_: Any, **__: Any) -> int:
+    """Detect SLA breaches on open threads and fire the workflow engine."""
+    from datetime import UTC, datetime
+
+    from sqlalchemy import select
+
+    from app.models.thread import Thread, ThreadStatus
+
+    now = datetime.now(UTC)
+    fired = 0
+
+    async with SessionLocal() as db:
+        first_resp_result = await db.execute(
+            select(Thread).where(
+                Thread.status == ThreadStatus.OPEN,
+                Thread.first_responded_at.is_(None),
+                Thread.sla_first_response_due_at.is_not(None),
+                Thread.sla_first_response_due_at < now,
+            )
+        )
+        for thread in first_resp_result.scalars().all():
+            await workflow_engine.trigger_workflow(
+                db,
+                workspace_id=thread.workspace_id,
+                trigger_type="sla_breached",
+                entity_type="thread",
+                entity_id=thread.id,
+                context={
+                    "thread_id": str(thread.id),
+                    "contact_id": str(thread.contact_id) if thread.contact_id else None,
+                    "deal_id": str(thread.deal_id) if thread.deal_id else None,
+                    "breach_type": "first_response",
+                },
+            )
+            fired += 1
+
+        resolution_result = await db.execute(
+            select(Thread).where(
+                Thread.status == ThreadStatus.OPEN,
+                Thread.sla_resolution_due_at.is_not(None),
+                Thread.sla_resolution_due_at < now,
+            )
+        )
+        for thread in resolution_result.scalars().all():
+            await workflow_engine.trigger_workflow(
+                db,
+                workspace_id=thread.workspace_id,
+                trigger_type="sla_breached",
+                entity_type="thread",
+                entity_id=thread.id,
+                context={
+                    "thread_id": str(thread.id),
+                    "contact_id": str(thread.contact_id) if thread.contact_id else None,
+                    "deal_id": str(thread.deal_id) if thread.deal_id else None,
+                    "breach_type": "resolution",
+                },
+            )
+            fired += 1
+
+        await db.commit()
+    return fired
