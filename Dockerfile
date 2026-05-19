@@ -25,4 +25,6 @@ COPY alembic.ini ./
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Single image, two roles. Set SERVICE_TYPE=worker on the ARQ worker service;
+# everything else (default) starts the FastAPI app. Railway injects $PORT.
+CMD ["sh", "-c", "if [ \"$SERVICE_TYPE\" = \"worker\" ]; then exec arq app.worker.settings.WorkerSettings; else exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
