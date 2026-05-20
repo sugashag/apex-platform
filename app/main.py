@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import engine
@@ -64,6 +65,19 @@ app = FastAPI(
 )
 
 app.add_middleware(WorkspaceContextMiddleware)
+
+# CORS — registered last so it sits outermost and can answer preflight
+# OPTIONS requests before they reach workspace/auth middleware. Exact origins
+# come from settings; the regex covers Vercel preview deployments
+# (e.g. apex-frontend-git-<branch>-<team>.vercel.app).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"https://[a-z0-9-]+\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Platform routes — kept unversioned for now.
 app.include_router(health.router)

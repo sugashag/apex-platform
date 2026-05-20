@@ -21,6 +21,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     VERSION: str = "0.1.0"
 
+    # CORS — comma-separated list of exact allowed frontend origins. Vercel
+    # preview deployments (*.vercel.app) are matched separately via regex in
+    # app/main.py, since CORSMiddleware does exact matching on this list.
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,https://apex-frontend-gules.vercel.app",
+        description="Comma-separated list of allowed CORS origins.",
+    )
+
     # Database
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://apex:apex@localhost:5432/apex",
@@ -85,6 +93,11 @@ class Settings(BaseSettings):
     # NetSuite — platform-level fallback. Live credentials live per-workspace
     # in `netsuite_configs`. This is purely a dev convenience.
     NETSUITE_DEFAULT_ACCOUNT_ID: str | None = None
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """`CORS_ORIGINS` parsed into a clean list of origins."""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
 
 @lru_cache
